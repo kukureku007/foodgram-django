@@ -11,16 +11,24 @@ class Ingredient(models.Model):
 
 class Tag(models.Model):
     name = models.CharField(max_length=200)
-    color = models.CharField(max_length=10)
+    color = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)
 
 
-# много доделок
 class Recipe(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='recipes'
+    )
+    tags = models.ManyToManyField(
+        Tag,
+        related_name='in_recipes'
+    )
+    ingredients = models.ManyToManyField(
+        Ingredient,
+        through='Ingredients_in_recipes',
+        related_name='in_recipes'
     )
     name = models.CharField(max_length=200)
     cooking_time = models.IntegerField()
@@ -31,30 +39,13 @@ class Recipe(models.Model):
     # )
 
 
-# add related_name, заменить на many-to-many
-# on_delete=models.SET_DEFAULT, установить дефолт в модели тега ??
-class Recipe_to_tag(models.Model):
+class Ingredients_in_recipes(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='with_tag'
-    )
-    tag = models.ForeignKey(
-        Tag,
-        on_delete=models.CASCADE,
-        related_name='in_recipes'
-    )
-
-
-class Recipe_to_ingredient(models.Model):
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='consist_of_ingredients'
     )
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
-        related_name='in_recipes'
     )
     amount = models.IntegerField()
