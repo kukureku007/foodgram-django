@@ -2,15 +2,13 @@ import csv
 
 from recipes.models import (
     Ingredient,
-    Tag, Recipe, Ingredients_in_recipes,
-    Favorite, Shopping_cart
+    Tag, Recipe, Ingredients_in_recipes
 )
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
 
-# TODO change id to pk
 def import_model_from_csv(klass, file_path):
     with open(file_path) as file:
         reader = csv.reader(file)
@@ -20,25 +18,22 @@ def import_model_from_csv(klass, file_path):
             for count, attribute_name in enumerate(headers):
                 setattr(obj, attribute_name, row[count])
             obj.save()
-    # return klass.objects.all()
 
 
 def import_users_from_csv(file_path):
     with open(file_path) as file:
         reader = csv.reader(file)
-        headers = next(reader)
+        headers = next(reader)[4:]
         # id, username, password, email - для create_user()
-        headers = headers[4:]
-        print(headers)
         for row in reader:
-            id_, username, password, email = row[:4]
+            pk_, username, password, email = row[:4]
             row = row[4:]
             user = User.objects.create_user(
                 username=username,
                 password=password,
                 email=email
             )
-            user.id = id_
+            user.pk = pk_
             User.objects.get(username=username).delete()
 
             for count, attribute_name in enumerate(headers):
@@ -46,43 +41,17 @@ def import_users_from_csv(file_path):
             user.save()
 
 
-# def import_model_to_model(klass_intermediate, klass_root, klass, file_path):
-    # with open(file_path) as file:
-        # reader = csv.reader(file)
-        # next(reader)
-        # for row in reader:
-            # obj = klass_root.objects.get(pk=row[1])
-            # topping = klass.objects.get(pk=row[2])
-            # eval(f'obj.{related_name}.add(topping)')
-
-            # klass_root.RELATED.add(klass)
-
-
-def import_relations_tags(file_path):
+def import_model_to_model(klass_root, klass, related_name, file_path):
     with open(file_path) as file:
         reader = csv.reader(file)
-        # считать "в пустоту" headers
         next(reader)
         for row in reader:
-            recipe_id, tag_id = row[1], row[2]
-            recipe = Recipe.objects.get(id=recipe_id)
-            tag = Tag.objects.get(id=tag_id)
-            recipe.tags.add(tag)
+            obj = klass_root.objects.get(pk=row[1])
+            topping = klass.objects.get(pk=row[2])
+            eval(f'obj.{related_name}.add(topping)')
 
 
-def import_subscriptions(file_path):
-    with open(file_path) as file:
-        reader = csv.reader(file)
-        # считать "в пустоту" headers
-        next(reader)
-        for row in reader:
-            from_user_pk, to_user_pk = row[1:]
-            from_user = User.objects.get(pk=from_user_pk)
-            to_user = User.objects.get(pk=to_user_pk)
-            from_user.subscriptions.add(to_user)
-
-
-def import_demo_db_for_sure():
+def delete_user_db():
     print('THIS WILL REPLACE ALL YOUR DATA FROM DB BY DEMO')
     if input('Do You Want To Continue? [y/n]') != 'y':
         return
@@ -91,12 +60,14 @@ def import_demo_db_for_sure():
     Recipe.objects.all().delete()
     Ingredient.objects.all().delete()
     Ingredients_in_recipes.objects.all().delete()
-    # удаление связей между рецептами и тегами
+    # удаление связей m2m с авто таблицами
     Recipe.tags.through.objects.all().delete()
-    Favorite.objects.all().delete()
-    Shopping_cart.objects.all().delete()
+    User.favorites.through.objects.all().delete()
+    User.cart.through.objects.all().delete()
     User.subscriptions.through.objects.all().delete()
 
+
+def import_demo():
     import_users_from_csv('demo-base/users.csv')
     import_model_from_csv(Ingredient, 'demo-base/ingredients.csv')
     import_model_from_csv(Tag, 'demo-base/tags.csv')
@@ -105,7 +76,15 @@ def import_demo_db_for_sure():
         Ingredients_in_recipes,
         'demo-base/igredients_in_recipes.csv'
     )
-    import_relations_tags('demo-base/recipe_tags.csv')
-    import_model_from_csv(Favorite, 'demo-base/favorites.csv')
-    import_model_from_csv(Shopping_cart, 'demo-base/cart.csv')
-    import_subscriptions('demo-base/subscriptions.csv')
+    import_model_to_model(Recipe, Tag, 'tags', 'demo-base/recipe_tags.csv')
+    import_model_to_model(User, Recipe, 'favorites', 'demo-base/favorites.csv')
+    import_model_to_model(User, Recipe, 'cart', 'demo-base/cart.csv')
+    import_model_to_model(
+        User, User, 'subscriptions',
+        'demo-base/subscriptions.csv'
+    )
+
+
+def import_demo_db_for_sure():
+    delete_user_db()
+    import_demo()
