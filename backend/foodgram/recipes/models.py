@@ -5,47 +5,56 @@ User = get_user_model()
 
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=200)
-    measurement_unit = models.CharField(max_length=200)
+    name = models.CharField(verbose_name='Название', max_length=200)
+    measurement_unit = models.CharField(
+        verbose_name='Единица измерения', max_length=200
+    )
 
 
 class Tag(models.Model):
-    name = models.CharField(max_length=200)
-    color = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
+    name = models.CharField(verbose_name='Название', max_length=200)
+    color = models.CharField(verbose_name='Цвет', max_length=200, null=True)
+    slug = models.SlugField(verbose_name='Slug', unique=True, null=True)
 
 
 class Recipe(models.Model):
     author = models.ForeignKey(
         User,
+        verbose_name='Автор',
         on_delete=models.CASCADE,
         related_name='recipes'
     )
     tags = models.ManyToManyField(
         Tag,
+        verbose_name='Теги',
         related_name='in_recipes'
     )
     ingredients = models.ManyToManyField(
         Ingredient,
-        through='Ingredients_in_recipes',
+        verbose_name='Ингредиенты',
+        through='IngredientsInRecipes',
         related_name='in_recipes'
     )
-    name = models.CharField(max_length=200)
-    cooking_time = models.IntegerField()
-    text = models.TextField()
+    name = models.CharField(
+        verbose_name='Название',
+        max_length=200
+    )
+    cooking_time = models.IntegerField(verbose_name='Время готовки (мин.)')
+    text = models.TextField(verbose_name='Описание')
     # image = models.ImageField(
-    #     upload_to=''
+    #     verbose_name='Изображение',
+    #     upload_to='recipes/',
     #     blank=True
     # )
 
 
-class Ingredients_in_recipes(models.Model):
+class IngredientsInRecipes(models.Model):
     recipe = models.ForeignKey(
         Recipe,
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE
     )
     ingredient = models.ForeignKey(
         Ingredient,
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE
     )
     amount = models.IntegerField()
