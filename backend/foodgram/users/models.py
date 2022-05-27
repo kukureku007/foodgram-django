@@ -5,7 +5,7 @@ from django.db import models
 # TODO можно подписаться на самого себя!!
 class User(AbstractUser):
     subscriptions = models.ManyToManyField(
-        'self', verbose_name='Подписчики', symmetrical=False
+        'self', verbose_name='Подписки', symmetrical=False
     )
     favorites = models.ManyToManyField(
         'recipes.Recipe', verbose_name='Избранное',
