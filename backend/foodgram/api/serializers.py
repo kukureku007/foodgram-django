@@ -3,6 +3,9 @@ from djoser.serializers import (UserCreateSerializer
                                 as DjoserUserCreateSerializer)
 
 from rest_framework.exceptions import ValidationError
+# from django.shortcuts import get_object_or_404
+# from django.core.exceptions import 
+
 
 from recipes.models import Tag, Ingredient, Recipe, IngredientsInRecipes
 from users.models import User
@@ -118,8 +121,54 @@ class RecipeSerializer(serializers.ModelSerializer):
         return tags
 
     def validate_ingredients(self, ingregients_with_amount):
-        # [{'id': 570, 'amount': 2000}, {'id': 1883, 'amount': 500}]
-        print(ingregients_with_amount)
+        '''
+        Валидируем ингридиенты с количеством
+        на выходе список кортежей типа (Ingredient_object, amount)
+        '''
+        # Проверяем что пришёл список словарей
+        if any(not isinstance(tag, dict) for tag in ingregients_with_amount):
+            raise ValidationError(
+                {
+                    'ingredients': 'Проверьте список ингредиентов.'
+                    'С ним что-то не так.'
+                }
+            )
+        ingredients_already_checked = set()
+
+        for _ in range(len(ingregients_with_amount)):
+            ing = ingregients_with_amount.pop(0)
+
+            # Ключи 'id', 'amount' в словаре ингредиента
+            if not all(key in ing.keys() for key in ('id', 'amount')):
+                raise ValidationError({
+                    'ingredients': 'Проверьте корректность '
+                                   'списка ингредиентов.'
+                })
+
+            if any(not isinstance(item, int) for item in ing.values()):
+                raise ValidationError({
+                    'ingredients': 'Передаваемые значения должны быть int.'
+                })
+
+            ingredient_id = ing['id']
+            amount = ing['amount']
+
+            if ingredient_id in ingredients_already_checked:
+                raise ValidationError({
+                    'ingredients': f'Вы несколько раз добавили '
+                                   f'ингредиент с id={ingredient_id}'
+                })
+
+            try:
+                ingredient = Ingredient.objects.get(pk=ingredient_id)
+            except Ingredient.DoesNotExist:
+                raise ValidationError({
+                    'ingredients': f'Ингредиента id={ingredient_id} '
+                                   f'не существует'
+                })
+
+            ingredients_already_checked.add(ingredient_id)
+            ingregients_with_amount.append((ingredient, amount))
 
         return ingregients_with_amount
 
@@ -130,16 +179,6 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         return super().run_validation(data)
 
-    def validate(self, attrs):
-        # провалидировать пользователя
-        # attrs['author'] = self.context['request'].user
-        # валидация тегов, что это словарь
-        # print(type(attrs['tags']))
-        # print(attrs)
-        # провалидировать все ингредиенты и кол-во
-        # attrs['ingredients'] = self.initial_data['ingredients']
-        return super().validate(attrs)
-
     def create(self, validated_data):
         tags = validated_data.pop('tags')
         ingregients_with_amount = validated_data.pop('ingredients')
@@ -148,14 +187,8 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         recipe.tags.add(*tags)
 
-
         for ingredient in ingregients_with_amount:
-            self.ingredients.add(
-                Ingredient.objects.get(pk=ingredient['id']),
-                through_defaults={'amount': ingredient['amount']}
-            )
-
-        # recipe.add_ingredients_with_amount_by_id(ingregients_with_amount)
+            recipe.add_ingredient_with_amount(*ingredient)
 
         return recipe
 
