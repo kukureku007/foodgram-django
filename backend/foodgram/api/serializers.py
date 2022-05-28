@@ -63,11 +63,10 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientsInRecipesSerializer(serializers.ModelSerializer):
-    id = serializers.StringRelatedField(
+    id = serializers.IntegerField(
         source='ingredient.id',
         read_only=False
     )
-    # id = serializers.SerializerMethodField(read_only=False)
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit'
@@ -77,19 +76,9 @@ class IngredientsInRecipesSerializer(serializers.ModelSerializer):
         model = IngredientsInRecipes
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
-    # extra_kwargs = {
-    #     'id': {'required': True},
-    #     'amount': {'required': True}
-    # }
 
-    # def validate_id(self, value):
-    #     print(value)
-    #     return value
-
-    # def get_id(self, obj):
-    #     return 22222
-
-
+# patch
+# del
 class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     tags = serializers.SerializerMethodField(read_only=False)
@@ -139,24 +128,12 @@ class RecipeSerializer(serializers.ModelSerializer):
         Валидируем ингридиенты с количеством
         на выходе список кортежей типа (Ingredient_object, amount)
         '''
-
-        # Проверяем что пришёл список словарей
-        # Попробовать через сериализатор IngredientsInRecipesSerializer
-        if any(not isinstance(tag, dict) for tag in ingregients_with_amount):
-            raise ValidationError(
-                {
-                    'ingredients': 'Проверьте список ингредиентов.'
-                    'С ним что-то не так.'
-                }
-            )
         ingredients_already_checked = set()
 
         for _ in range(len(ingregients_with_amount)):
             ing = ingregients_with_amount.pop(0)
 
-            # validation id is not working
             serializer = IngredientsInRecipesSerializer(data=ing)
-
             if not serializer.is_valid():
                 raise ValidationError({'ingredients': 'Проверьте ингредиенты'})
 
