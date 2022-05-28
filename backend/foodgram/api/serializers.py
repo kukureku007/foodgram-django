@@ -4,7 +4,7 @@ from djoser.serializers import (UserCreateSerializer
 
 from rest_framework.exceptions import ValidationError
 # from django.shortcuts import get_object_or_404
-# from django.core.exceptions import 
+# from django.core.exceptions import
 
 
 from recipes.models import Tag, Ingredient, Recipe, IngredientsInRecipes
@@ -25,8 +25,6 @@ class UserSerializer(serializers.ModelSerializer):
             'is_subscribed'
         )
 
-    # rename obj to user
-    # user to current user
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
         if user.is_authenticated:
@@ -65,7 +63,11 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientsInRecipesSerializer(serializers.ModelSerializer):
-    id = serializers.StringRelatedField(source='ingredient.id')
+    id = serializers.StringRelatedField(
+        source='ingredient.id',
+        read_only=False
+    )
+    # id = serializers.SerializerMethodField(read_only=False)
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit'
@@ -75,11 +77,23 @@ class IngredientsInRecipesSerializer(serializers.ModelSerializer):
         model = IngredientsInRecipes
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
+    # extra_kwargs = {
+    #     'id': {'required': True},
+    #     'amount': {'required': True}
+    # }
+
+    # def validate_id(self, value):
+    #     print(value)
+    #     return value
+
+    # def get_id(self, obj):
+    #     return 22222
+
 
 class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     tags = serializers.SerializerMethodField(read_only=False)
-    # tags = TagSerializer(many=True, read_only=False)
+    # ingredients = IngredientsInRecipesSerializer(many=True, read_only=False)
     ingredients = serializers.SerializerMethodField(read_only=False)
     is_favorited = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
@@ -125,7 +139,9 @@ class RecipeSerializer(serializers.ModelSerializer):
         Валидируем ингридиенты с количеством
         на выходе список кортежей типа (Ingredient_object, amount)
         '''
+
         # Проверяем что пришёл список словарей
+        # Попробовать через сериализатор IngredientsInRecipesSerializer
         if any(not isinstance(tag, dict) for tag in ingregients_with_amount):
             raise ValidationError(
                 {
@@ -138,17 +154,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         for _ in range(len(ingregients_with_amount)):
             ing = ingregients_with_amount.pop(0)
 
-            # Ключи 'id', 'amount' в словаре ингредиента
-            if not all(key in ing.keys() for key in ('id', 'amount')):
-                raise ValidationError({
-                    'ingredients': 'Проверьте корректность '
-                                   'списка ингредиентов.'
-                })
+            # validation id is not working
+            serializer = IngredientsInRecipesSerializer(data=ing)
 
-            if any(not isinstance(item, int) for item in ing.values()):
-                raise ValidationError({
-                    'ingredients': 'Передаваемые значения должны быть int.'
-                })
+            if not serializer.is_valid():
+                raise ValidationError({'ingredients': 'Проверьте ингредиенты'})
 
             ingredient_id = ing['id']
             amount = ing['amount']
@@ -172,7 +182,6 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         return ingregients_with_amount
 
-    # самый первый этап валидации
     def run_validation(self, data):
         data['tags'] = self.validate_tags(data['tags'])
         data['ingredients'] = self.validate_ingredients(data['ingredients'])
