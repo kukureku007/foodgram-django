@@ -75,6 +75,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
+    # !!!
+    permission_classes = (AllowAny,)
 
     def get_queryset(self):
         # print(self.request.auth)
@@ -93,3 +95,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         # print(self.request.query_params.dict())
 
         return super().get_queryset()
+
+    def perform_create(self, serializer):
+        serializer.save(
+            author=self.request.user,
+            tags=self.request.data['tags'],
+            ingredients=self.request.data['ingredients']
+        )

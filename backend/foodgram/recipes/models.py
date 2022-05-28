@@ -47,6 +47,18 @@ class Recipe(models.Model):
     #     blank=True
     # )
 
+    def add_ingredients_with_amount_by_id(self, ingregients_with_amount):
+        """
+        Добавление ингредиентов с количеством.
+        Список ingregients_with_amount должен быть провалидирован
+        и содержать словари с.
+        """
+        for ingredient in ingregients_with_amount:
+            self.ingredients.add(
+                Ingredient.objects.get(pk=ingredient['id']),
+                through_defaults={'amount': ingredient['amount']}
+            )
+
 
 class IngredientsInRecipes(models.Model):
     recipe = models.ForeignKey(
