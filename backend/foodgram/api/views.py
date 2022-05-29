@@ -4,10 +4,13 @@ from recipes.models import Tag, Ingredient, Recipe
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
+from django.http import FileResponse
 
 from django.contrib.auth import get_user_model
 from djoser.serializers import SetPasswordSerializer
 from rest_framework.decorators import action
+
+from foodgram.services import make_cart_file
 
 from .serializers import (TagSerializer,
                           IngredientSerializer,
@@ -126,7 +129,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = (AllowAny,)
 
     def get_permissions(self):
-        if self.action in ('favorite', 'shopping_cart'):
+        if self.action in (
+            'favorite',
+            'shopping_cart',
+            'download_shopping_cart'
+        ):
             return (IsAuthenticated(),)
         return super().get_permissions()
 
@@ -217,3 +224,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
         user.cart.remove(recipe)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(('get',), detail=False)
+    def download_shopping_cart(self, request, *args, **kwargs):
+        user = request.user
+
+        if not user.cart.count():
+            return Response(
+                {'errors': 'Ваша корзина пуста.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        file_name = make_cart_file(user)
+
+        return FileResponse(open(file_name, 'rb'), as_attachment=True)

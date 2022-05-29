@@ -41,11 +41,12 @@ class Recipe(models.Model):
     )
     cooking_time = models.IntegerField(verbose_name='Время готовки (мин.)')
     text = models.TextField(verbose_name='Описание')
-    # image = models.ImageField(
-    #     verbose_name='Изображение',
-    #     upload_to='recipes/',
-    #     blank=True
-    # )
+    image = models.ImageField(
+        verbose_name='Изображение',
+        upload_to='recipes/',
+        blank=True,
+        null=True
+    )
 
     def add_ingredient_with_amount(self, ingredient, amount):
         self.ingredients.add(ingredient, through_defaults={'amount': amount})

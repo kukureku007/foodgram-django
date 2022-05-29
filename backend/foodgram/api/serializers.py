@@ -1,11 +1,12 @@
+import base64
+from uuid import uuid4
+from django.core.files.base import ContentFile
+
 from rest_framework import serializers
 from djoser.serializers import (UserCreateSerializer
                                 as DjoserUserCreateSerializer)
 
 from rest_framework.exceptions import ValidationError
-# from django.shortcuts import get_object_or_404
-# from django.core.exceptions import
-
 
 from recipes.models import Tag, Ingredient, Recipe, IngredientsInRecipes
 from users.models import User
@@ -76,13 +77,28 @@ class IngredientsInRecipesSerializer(serializers.ModelSerializer):
         model = IngredientsInRecipes
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
-# check update!!!
+
+class ImageFieldBase64Input(serializers.ImageField):
+    def to_internal_value(self, data):
+        try:
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
+            file_name = f'{str(uuid4())}.{ext}'
+            data = ContentFile(base64.b64decode(imgstr), name=file_name)
+        except ValueError:
+            raise serializers.ValidationError(
+                'Ошибка в переданном изображении.'
+            )
+        return data
+
+
 class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
     ingredients = IngredientSerializer(many=True, read_only=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
+    image = ImageFieldBase64Input()
 
     class Meta:
         model = Recipe
@@ -188,12 +204,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         return recipe
 
 
-# add image
 class RecipeSerializerLight(serializers.ModelSerializer):
     class Meta:
         model = Recipe
-        fields = ('id', 'name', 'cooking_time')
-        read_only_fields = ('id', 'name', 'cooking_time')
+        fields = ('id', 'name', 'cooking_time', 'image')
+        read_only_fields = ('id', 'name', 'cooking_time', 'image')
 
 
 class UserSerializerWithRecipes(UserSerializer):

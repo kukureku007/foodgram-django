@@ -8,3 +8,5 @@ djangorestframework==3.12.4
 djangorestframework-simplejwt==4.7.2
 djoser==2.1.0
 django-filter==21.1
+pillow==9.1.1
+sorl-thumbnail==12.8.0

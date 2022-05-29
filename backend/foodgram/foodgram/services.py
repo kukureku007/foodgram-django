@@ -1,8 +1,10 @@
 import csv
 
+from django.conf import settings
+
 from recipes.models import (
     Ingredient,
-    Tag, Recipe, Ingredients_in_recipes
+    Tag, Recipe, IngredientsInRecipes
 )
 from django.contrib.auth import get_user_model
 
@@ -59,7 +61,7 @@ def delete_user_db():
     Tag.objects.all().delete()
     Recipe.objects.all().delete()
     Ingredient.objects.all().delete()
-    Ingredients_in_recipes.objects.all().delete()
+    IngredientsInRecipes.objects.all().delete()
     # удаление связей m2m с авто таблицами
     Recipe.tags.through.objects.all().delete()
     User.favorites.through.objects.all().delete()
@@ -73,7 +75,7 @@ def import_demo():
     import_model_from_csv(Tag, 'demo-base/tags.csv')
     import_model_from_csv(Recipe, 'demo-base/recipes.csv')
     import_model_from_csv(
-        Ingredients_in_recipes,
+        IngredientsInRecipes,
         'demo-base/igredients_in_recipes.csv'
     )
     import_model_to_model(Recipe, Tag, 'tags', 'demo-base/recipe_tags.csv')
@@ -88,3 +90,46 @@ def import_demo():
 def import_demo_db_for_sure():
     delete_user_db()
     import_demo()
+
+
+def ingredients_in_cart(user: User):
+    """
+    Перед запуском функции необходимо удостовериться, что
+    в корзине есть хотя бы один рецепт.
+    """
+
+    result = {}
+    ingredients_already_add = set()
+
+    for recipe in user.cart.all():
+
+        for item in recipe.ingredientsinrecipes_set.all():
+
+            ingredient_id = item.ingredient.id
+            amount = item.amount
+
+            if ingredient_id in ingredients_already_add:
+                result[ingredient_id] += amount
+            else:
+                result[ingredient_id] = amount
+
+            ingredients_already_add.add(ingredient_id)
+
+    # print(result)
+    return result
+
+
+def make_cart_file(user: User):
+    ingredients = ingredients_in_cart(user)
+    file_name = f'{settings.CART_ROOT}/{user.username}-cart.txt'
+
+    with open(file_name, 'w', encoding='utf-8') as file:
+        for ingredient_id in ingredients.keys():
+            ingredient = Ingredient.objects.get(pk=ingredient_id)
+            amount = ingredients[ingredient_id]
+
+            line = f'{ingredient.name}: {amount}'
+            f'({ingredient.measurement_unit})\n'
+            file.write(line)
+
+    return file_name
