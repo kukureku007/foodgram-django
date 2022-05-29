@@ -126,12 +126,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = (AllowAny,)
 
     def get_permissions(self):
-        if self.action == 'favorite':
+        if self.action in ('favorite', 'shopping_cart'):
             return (IsAuthenticated(),)
         return super().get_permissions()
 
     def get_serializer_class(self):
-        if self.action == 'favorite':
+        if self.action in ('favorite', 'shopping_cart'):
             return RecipeSerializerLight
         return super().get_serializer_class()
 
@@ -190,4 +190,30 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         user.favorites.remove(recipe)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(('post', 'delete'), detail=False,
+            url_path=r'(?P<pk>\d+)/favorite')
+    def shopping_cart(self, request, *args, **kwargs):
+        recipe = self.get_object()
+        user = self.request.user
+
+        if self.request.method == 'POST':
+            if recipe in user.cart.all():
+                return Response(
+                    {'errors': 'Данный рецепт уже находится в корзине'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            user.cart.add(recipe)
+            return Response(
+                self.get_serializer(recipe).data,
+                status=status.HTTP_201_CREATED
+            )
+
+        if not (recipe in user.cart.all()):
+            return Response(
+                {'errors': 'Данного рецепта нет в корзине'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        user.cart.remove(recipe)
         return Response(status=status.HTTP_204_NO_CONTENT)
