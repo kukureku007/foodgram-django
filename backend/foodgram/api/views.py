@@ -14,11 +14,12 @@ from .serializers import (TagSerializer,
                           RecipeSerializer,
                           UserSerializer,
                           UserCreateSerializer)
-from .mixins import CreateListRetrieveViewSet
+from .mixins import CreateListRetrieveViewSet, CreateDeleteViewSet
 
 User = get_user_model()
 
 
+# check set password
 class UserViewSet(CreateListRetrieveViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -72,10 +73,13 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ('^name',)
 
 
+# check permissions on del
+# check permissions on update
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     # !!!
+    # del update - admin, author permission
     permission_classes = (AllowAny,)
 
     def get_queryset(self):
@@ -102,3 +106,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
             tags=self.request.data['tags'],
             ingredients=self.request.data['ingredients']
         )
+
+    def perform_update(self, serializer):
+        serializer.save(
+            tags=self.request.data['tags'],
+            ingredients=self.request.data['ingredients']
+        )
+
+
+# create delete
+# serializer create
+# permission is auth
+# get queryset
+# return serialized data from recipeFavorite
+# 
+class FavoriteViewSet(CreateDeleteViewSet):
+    pass

@@ -78,7 +78,6 @@ class IngredientsInRecipesSerializer(serializers.ModelSerializer):
 
 
 # patch
-# del
 class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     tags = serializers.SerializerMethodField(read_only=False)
@@ -112,7 +111,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         return False
 
     def validate_tags(self, tags_ids):
-        if any(not isinstance(tag, int) for tag in tags_ids):
+        '''
+        Валидируем теги
+        на выходе список объектов тегов
+        '''
+        if not all(isinstance(tag, int) for tag in tags_ids):
             raise ValidationError(
                 {'tags': 'Проверьте список тегов. С ним что-то не так.'}
             )
@@ -173,8 +176,23 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         recipe.tags.add(*tags)
 
-        for ingredient in ingregients_with_amount:
-            recipe.add_ingredient_with_amount(*ingredient)
+        for ingregient_with_amount in ingregients_with_amount:
+            recipe.add_ingredient_with_amount(*ingregient_with_amount)
+
+        return recipe
+
+    def update(self, recipe, validated_data):
+        tags = validated_data.pop('tags')
+        ingregients_with_amount = validated_data.pop('ingredients')
+
+        super().update(recipe, validated_data)
+
+        recipe.tags.clear()
+        recipe.tags.add(*tags)
+
+        recipe.ingredients.clear()
+        for ingregient_with_amount in ingregients_with_amount:
+            recipe.add_ingredient_with_amount(*ingregient_with_amount)
 
         return recipe
 
