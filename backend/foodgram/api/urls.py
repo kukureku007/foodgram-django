@@ -37,18 +37,8 @@ router.register(
     basename='api-users'
 )
 
-# ...
-# url(r'^api-token-auth/', obtain_auth_token),
-
 
 urlpatterns = [
-    # path('', include('djoser.urls')),
-    # path('users/', CustomUserViewSet.as_view()),
-    # path('users/set_password/', DjoserUserViewSet.set_password),
     path('auth/', include('djoser.urls.authtoken')),
-    # path('auth/token/login/', TokenCreateView.as_view()),
-    # path('auth/token/logout/', TokenDestroyView.as_view()),
-    # path('auth/', obtain_auth_token),
-    # path('auth/', include('djoser.urls.jwt')),
     path('', include(router.urls))
 ]

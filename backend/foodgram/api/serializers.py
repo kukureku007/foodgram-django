@@ -77,26 +77,16 @@ class IngredientsInRecipesSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
-# patch
 class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
-    tags = serializers.SerializerMethodField(read_only=False)
-    # ingredients = IngredientsInRecipesSerializer(many=True, read_only=False)
-    ingredients = serializers.SerializerMethodField(read_only=False)
-    is_favorited = serializers.SerializerMethodField(read_only=True)
-    is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
+    tags = TagSerializer(many=True, read_only=True)
+    ingredients = IngredientSerializer(many=True, read_only=True)
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
         fields = '__all__'
-
-    def get_tags(self, recipe):
-        return TagSerializer(recipe.tags.all(), many=True).data
-
-    def get_ingredients(self, recipe):
-        return IngredientsInRecipesSerializer(
-            recipe.ingredientsinrecipes_set.all(), many=True
-        ).data
 
     def get_is_favorited(self, recipe):
         user = self.context['request'].user
@@ -115,6 +105,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         Валидируем теги
         на выходе список объектов тегов
         '''
+        # проверка, что входной список, состоит только из int
         if not all(isinstance(tag, int) for tag in tags_ids):
             raise ValidationError(
                 {'tags': 'Проверьте список тегов. С ним что-то не так.'}
@@ -196,4 +187,10 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         return recipe
 
-# список покупок избранное подписки
+
+# add image
+class RecipeSerializerLight(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'cooking_time')
+        read_only_fields = ('id', 'name', 'cooking_time')

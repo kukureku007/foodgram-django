@@ -13,13 +13,13 @@ from .serializers import (TagSerializer,
                           IngredientSerializer,
                           RecipeSerializer,
                           UserSerializer,
-                          UserCreateSerializer)
-from .mixins import CreateListRetrieveViewSet, CreateDeleteViewSet
+                          UserCreateSerializer,
+                          RecipeSerializerLight)
+from .mixins import CreateListRetrieveViewSet
 
 User = get_user_model()
 
 
-# check set password
 class UserViewSet(CreateListRetrieveViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -68,6 +68,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     Поиск по частичному вхождению в начале названия ингредиента.
     """
     queryset = Ingredient.objects.all()
+    permission_classes = (AllowAny,)
     serializer_class = IngredientSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ('^name',)
@@ -78,9 +79,17 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    # !!!
-    # del update - admin, author permission
     permission_classes = (AllowAny,)
+
+    def get_permissions(self):
+        if self.action == 'favorite':
+            return (IsAuthenticated(),)
+        return super().get_permissions()
+
+    def get_serializer_class(self):
+        if self.action == 'favorite':
+            return RecipeSerializerLight
+        return super().get_serializer_class()
 
     def get_queryset(self):
         # print(self.request.auth)
@@ -113,12 +122,28 @@ class RecipeViewSet(viewsets.ModelViewSet):
             ingredients=self.request.data['ingredients']
         )
 
+    @action(('post', 'delete'), detail=False,
+            url_path=r'(?P<pk>\d+)/favorite')
+    def favorite(self, request, *args, **kwargs):
+        recipe = self.get_object()
+        user = self.request.user
 
-# create delete
-# serializer create
-# permission is auth
-# get queryset
-# return serialized data from recipeFavorite
-# 
-class FavoriteViewSet(CreateDeleteViewSet):
-    pass
+        if self.request.method == 'POST':
+            if recipe in user.favorites.all():
+                return Response(
+                    {'errors': 'Данный рецепт уже находится в избранном'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            user.favorites.add(recipe)
+            return Response(
+                self.get_serializer(recipe).data,
+                status=status.HTTP_201_CREATED
+            )
+
+        if not (recipe in user.favorites.all()):
+            return Response(
+                {'errors': 'Данного рецепта нет в избранном'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        user.favorites.remove(recipe)
+        return Response(status=status.HTTP_204_NO_CONTENT)
