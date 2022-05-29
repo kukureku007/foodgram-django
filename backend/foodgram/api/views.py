@@ -14,7 +14,8 @@ from .serializers import (TagSerializer,
                           RecipeSerializer,
                           UserSerializer,
                           UserCreateSerializer,
-                          RecipeSerializerLight)
+                          RecipeSerializerLight,
+                          UserSerializerWithRecipes)
 from .mixins import CreateListRetrieveViewSet
 
 User = get_user_model()
@@ -25,11 +26,18 @@ class UserViewSet(CreateListRetrieveViewSet):
     serializer_class = UserSerializer
     permission_classes = (AllowAny,)
 
-    def get_instance(self):
-        return self.request.user
+    def get_queryset(self):
+        if self.action == 'subscriptions':
+            return self.request.user.subscriptions.all()
+        return super().get_queryset()
+
+    def get_object(self):
+        if self.action == 'me':
+            return self.request.user
+        return super().get_object()
 
     def get_permissions(self):
-        if self.action in ('me', 'set_password'):
+        if self.action in ('me', 'set_password', 'subscriptions', 'subscribe'):
             return (IsAuthenticated(),)
         return super().get_permissions()
 
@@ -38,11 +46,12 @@ class UserViewSet(CreateListRetrieveViewSet):
             return UserCreateSerializer
         if self.action == 'set_password':
             return SetPasswordSerializer
+        if self.action in ('subscriptions', 'subscribe'):
+            return UserSerializerWithRecipes
         return super().get_serializer_class()
 
     @action(('get',), detail=False)
     def me(self, request, *args, **kwargs):
-        self.get_object = self.get_instance
         return self.retrieve(request, *args, **kwargs)
 
     @action(('post',), detail=False)
@@ -51,6 +60,41 @@ class UserViewSet(CreateListRetrieveViewSet):
         serializer.is_valid(raise_exception=True)
         self.request.user.set_password(serializer.data['new_password'])
         self.request.user.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(('get',), detail=False)
+    def subscriptions(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    @action(('post', 'delete'), detail=False,
+            url_path=r'(?P<pk>\d+)/subscribe')
+    def subscribe(self, request, *args, **kwargs):
+        user_object = self.get_object()
+        user = self.request.user
+
+        if user_object == user:
+            return Response(
+                {'errors': 'Вы не можете подписаться на самого себя.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if self.request.method == 'POST':
+            if user_object in user.subscriptions.all():
+                return Response(
+                    {'errors': 'Вы уже подписаны на этого пользователя.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            user.subscriptions.add(user_object)
+            return Response(
+                self.get_serializer(user_object).data,
+                status=status.HTTP_201_CREATED
+            )
+        if not (user_object in user.subscriptions.all()):
+            return Response(
+                {'errors': 'Вы не подписаны на этого пользователя.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        user.subscriptions.remove(user_object)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

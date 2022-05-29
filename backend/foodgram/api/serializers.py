@@ -76,7 +76,7 @@ class IngredientsInRecipesSerializer(serializers.ModelSerializer):
         model = IngredientsInRecipes
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
-
+# check update!!!
 class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
@@ -194,3 +194,36 @@ class RecipeSerializerLight(serializers.ModelSerializer):
         model = Recipe
         fields = ('id', 'name', 'cooking_time')
         read_only_fields = ('id', 'name', 'cooking_time')
+
+
+class UserSerializerWithRecipes(UserSerializer):
+    recipes = RecipeSerializerLight(
+        many=True
+    )
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'email',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+            'recipes',
+            'recipes_count'
+        )
+        read_only_fields = (
+            'id',
+            'email',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+            'recipes',
+            'recipes_count'
+        )
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
