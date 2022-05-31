@@ -6,7 +6,7 @@ from django.http import FileResponse
 from djoser.serializers import SetPasswordSerializer
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
 from foodgram.services import make_cart_file
