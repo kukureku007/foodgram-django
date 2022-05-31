@@ -11,7 +11,7 @@ from djoser.serializers import SetPasswordSerializer
 from rest_framework.decorators import action
 
 from foodgram.services import make_cart_file
-
+from .pagination import PageNumberWithLimitPagination
 from .permissions import AuthorOnly
 from .serializers import (TagSerializer,
                           IngredientSerializer,
@@ -28,6 +28,7 @@ User = get_user_model()
 class UserViewSet(CreateListRetrieveViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    pagination_class = PageNumberWithLimitPagination
 
     def get_queryset(self):
         if self.action == 'subscriptions':
@@ -121,6 +122,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
+    pagination_class = PageNumberWithLimitPagination
     # http_method_names: ('get', '')
 
     def get_permissions(self):
