@@ -1,13 +1,21 @@
-version: '3.3'
+version: '3.8'
 
 services:
+  db:
+    image: postgres:13.0-alpine
+    volumes:
+      - /var/lib/postgresql/data/
+    env_file:
+      - .env
   backend:
-    build:
-      context: ../backend/foodgram
-      dockerfile: Dockerfile
+    image: kukureku007/foodgram-backend:latest
+    container_name: backend
+    restart: always
     volumes:
       - static_value:/app/static/
       - media_value:/app/media/
+    env_file:
+      - .env
   frontend:
     build:
       context: ../frontend
