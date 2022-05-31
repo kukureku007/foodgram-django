@@ -47,7 +47,8 @@ def import_model_to_model(klass_root, klass, related_name, file_path):
         for row in reader:
             obj = klass_root.objects.get(pk=row[1])
             topping = klass.objects.get(pk=row[2])
-            eval(f'obj.{related_name}.add(topping)')
+            klass_method = getattr(obj, f'{related_name}')
+            klass_method.add(topping)
 
 
 def delete_user_db():
