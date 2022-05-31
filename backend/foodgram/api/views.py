@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from rest_framework import filters
 from recipes.models import Tag, Ingredient, Recipe
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework import status
 from rest_framework.response import Response
 from django.http import FileResponse
@@ -12,6 +12,7 @@ from rest_framework.decorators import action
 
 from foodgram.services import make_cart_file
 
+from .permissions import AuthorOnly
 from .serializers import (TagSerializer,
                           IngredientSerializer,
                           RecipeSerializer,
@@ -27,7 +28,6 @@ User = get_user_model()
 class UserViewSet(CreateListRetrieveViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (AllowAny,)
 
     def get_queryset(self):
         if self.action == 'subscriptions':
@@ -102,9 +102,6 @@ class UserViewSet(CreateListRetrieveViewSet):
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    Выдача всех тегов, тегов по id.
-    """
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
 
@@ -115,26 +112,20 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     Поиск по частичному вхождению в начале названия ингредиента.
     """
     queryset = Ingredient.objects.all()
-    permission_classes = (AllowAny,)
     serializer_class = IngredientSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ('^name',)
 
 
-# check permissions on del
-# check permissions on update
+# dissallow patch !!
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    permission_classes = (AllowAny,)
+    # http_method_names: ('get', '')
 
     def get_permissions(self):
-        if self.action in (
-            'favorite',
-            'shopping_cart',
-            'download_shopping_cart'
-        ):
-            return (IsAuthenticated(),)
+        if self.action in ('update', 'destroy'):
+            return (AuthorOnly | IsAdminUser,)
         return super().get_permissions()
 
     def get_serializer_class(self):
@@ -200,7 +191,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(('post', 'delete'), detail=False,
-            url_path=r'(?P<pk>\d+)/favorite')
+            url_path=r'(?P<pk>\d+)/shopping_cart')
     def shopping_cart(self, request, *args, **kwargs):
         recipe = self.get_object()
         user = self.request.user

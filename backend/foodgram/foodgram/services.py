@@ -96,6 +96,7 @@ def ingredients_in_cart(user: User):
     """
     Перед запуском функции необходимо удостовериться, что
     в корзине есть хотя бы один рецепт.
+    на выходе словарь 'ingredient_id' : 'amount'
     """
 
     result = {}
@@ -115,7 +116,6 @@ def ingredients_in_cart(user: User):
 
             ingredients_already_add.add(ingredient_id)
 
-    # print(result)
     return result
 
 

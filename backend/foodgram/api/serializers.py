@@ -81,10 +81,10 @@ class IngredientsInRecipesSerializer(serializers.ModelSerializer):
 class ImageFieldBase64Input(serializers.ImageField):
     def to_internal_value(self, data):
         try:
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-            file_name = f'{str(uuid4())}.{ext}'
-            data = ContentFile(base64.b64decode(imgstr), name=file_name)
+            format, image_string = data.split(';base64,')
+            file_format = format.split('/')[-1]
+            file_name = f'{str(uuid4())}.{file_format}'
+            data = ContentFile(base64.b64decode(image_string), name=file_name)
         except ValueError:
             raise serializers.ValidationError(
                 'Ошибка в переданном изображении.'
@@ -139,6 +139,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         на выходе список кортежей типа (Ingredient_object, amount)
         '''
         ingredients_already_checked = set()
+
+        if not ingregients_with_amount:
+            raise ValidationError(
+                {'ingredients': 'Список ингредиентов пуст.'}
+            )
 
         for _ in range(len(ingregients_with_amount)):
             ing = ingregients_with_amount.pop(0)
