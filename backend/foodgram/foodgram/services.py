@@ -126,8 +126,8 @@ def make_cart_file(user: User):
             ingredient = Ingredient.objects.get(pk=ingredient_id)
             amount = ingredients[ingredient_id]
 
-            line = f'{ingredient.name}: {amount}'
-            f'({ingredient.measurement_unit})\n'
+            line = (f'{ingredient.name}: {amount}'
+                    f'({ingredient.measurement_unit})\n')
             file.write(line)
 
     return file_name
