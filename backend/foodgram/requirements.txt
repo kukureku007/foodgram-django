@@ -11,3 +11,4 @@ django-filter==21.1
 pillow==9.1.1
 sorl-thumbnail==12.8.0
 gunicorn==20.1.0
+psycopg2-binary==2.8.6
