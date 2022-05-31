@@ -1,3 +1,4 @@
+from distutils.util import strtobool
 from rest_framework import viewsets
 from rest_framework import filters
 from recipes.models import Tag, Ingredient, Recipe
@@ -5,12 +6,14 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework import status
 from rest_framework.response import Response
 from django.http import FileResponse
+import django_filters
 
 from django.contrib.auth import get_user_model
 from djoser.serializers import SetPasswordSerializer
 from rest_framework.decorators import action
 
 from foodgram.services import make_cart_file
+from .filters import RecipeFilter
 from .pagination import PageNumberWithLimitPagination
 from .permissions import AuthorOnly
 from .serializers import (TagSerializer,
@@ -118,40 +121,40 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ('^name',)
 
 
-# dissallow patch !!
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     pagination_class = PageNumberWithLimitPagination
-    # http_method_names: ('get', '')
+    filter_backends = (django_filters.rest_framework.DjangoFilterBackend,)
+    filterset_class = RecipeFilter
 
-    def get_permissions(self):
-        if self.action in ('update', 'destroy'):
-            return (AuthorOnly | IsAdminUser,)
-        return super().get_permissions()
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            is_favorited = self.request.query_params.get('is_favorited')
+            is_in_shopping_cart = self.request.query_params.get(
+                'is_in_shopping_cart'
+            )
+            try:
+                if is_favorited is not None and strtobool(is_favorited):
+                    return self.request.user.favorites.all()
+
+                if (is_in_shopping_cart is not None
+                   and strtobool(is_in_shopping_cart)):
+                    return self.request.user.cart.all()
+            except ValueError:
+                print('error')
+
+        return super().get_queryset()
 
     def get_serializer_class(self):
         if self.action in ('favorite', 'shopping_cart'):
             return RecipeSerializerLight
         return super().get_serializer_class()
 
-    def get_queryset(self):
-        # print(self.request.auth)
-        # print(self.request.user)
-        # print(self.request)
-        # need parser to fav, cart etc
-        # print(self.request.data)
-        # print(self.request.query_params)
-        # q = self.request.query_params
-        # print(q.keys())
-        # print(q.items())
-
-        # for key in q:
-        #     print(q[key])
-
-        # print(self.request.query_params.dict())
-
-        return super().get_queryset()
+    def get_permissions(self):
+        if self.action in ('update', 'destroy'):
+            return (AuthorOnly | IsAdminUser,)
+        return super().get_permissions()
 
     def perform_create(self, serializer):
         serializer.save(

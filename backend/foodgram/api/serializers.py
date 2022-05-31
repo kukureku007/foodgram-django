@@ -49,7 +49,6 @@ class UserCreateSerializer(DjoserUserCreateSerializer):
         }
 
 
-# валидация hex-кода тега
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag

@@ -10,7 +10,11 @@ class Ingredient(models.Model):
         verbose_name='Единица измерения', max_length=200
     )
 
-    def __srt__(self):
+    class Meta:
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
+
+    def __str__(self):
         return self.name
 
 
@@ -19,7 +23,11 @@ class Tag(models.Model):
     color = models.CharField(verbose_name='Цвет', max_length=200, null=True)
     slug = models.SlugField(verbose_name='Slug', unique=True, null=True)
 
-    def __srt__(self):
+    class Meta:
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
+
+    def __str__(self):
         return self.name
 
 
@@ -59,9 +67,11 @@ class Recipe(models.Model):
         self.ingredients.add(ingredient, through_defaults={'amount': amount})
 
     class Meta:
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
         ordering = ('-pub_date',)
 
-    def __srt__(self):
+    def __str__(self):
         return self.name
 
 
@@ -75,3 +85,10 @@ class IngredientsInRecipes(models.Model):
         on_delete=models.CASCADE
     )
     amount = models.IntegerField()
+
+    class Meta:
+        verbose_name = 'Ингредиент в рецепте'
+        verbose_name_plural = 'Ингредиенты в рецепте'
+
+    def __str__(self):
+        return f'{self.ingredient} в {self.recipe}'
