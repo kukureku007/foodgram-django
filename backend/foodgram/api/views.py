@@ -6,7 +6,7 @@ from django.http import FileResponse
 from djoser.serializers import SetPasswordSerializer
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from foodgram.services import make_cart_file
@@ -40,6 +40,8 @@ class UserViewSet(CreateListRetrieveViewSet):
         return super().get_object()
 
     def get_permissions(self):
+        if self.action == 'create':
+            return (AllowAny(),)
         if self.action in ('me', 'set_password', 'subscriptions', 'subscribe'):
             return (IsAuthenticated(),)
         return super().get_permissions()
