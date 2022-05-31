@@ -1,29 +1,25 @@
 from distutils.util import strtobool
-from rest_framework import viewsets
-from rest_framework import filters
-from recipes.models import Tag, Ingredient, Recipe
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from rest_framework import status
-from rest_framework.response import Response
-from django.http import FileResponse
-import django_filters
 
+import django_filters
 from django.contrib.auth import get_user_model
+from django.http import FileResponse
 from djoser.serializers import SetPasswordSerializer
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.response import Response
 
 from foodgram.services import make_cart_file
+from recipes.models import Ingredient, Recipe, Tag
+
 from .filters import RecipeFilter
+from .mixins import CreateListRetrieveViewSet
 from .pagination import PageNumberWithLimitPagination
 from .permissions import AuthorOnly
-from .serializers import (TagSerializer,
-                          IngredientSerializer,
-                          RecipeSerializer,
-                          UserSerializer,
-                          UserCreateSerializer,
-                          RecipeSerializerLight,
+from .serializers import (IngredientSerializer, RecipeSerializer,
+                          RecipeSerializerLight, TagSerializer,
+                          UserCreateSerializer, UserSerializer,
                           UserSerializerWithRecipes)
-from .mixins import CreateListRetrieveViewSet
 
 User = get_user_model()
 

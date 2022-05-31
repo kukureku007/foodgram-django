@@ -1,12 +1,9 @@
 import csv
 
 from django.conf import settings
-
-from recipes.models import (
-    Ingredient,
-    Tag, Recipe, IngredientsInRecipes
-)
 from django.contrib.auth import get_user_model
+
+from recipes.models import Ingredient, IngredientsInRecipes, Recipe, Tag
 
 User = get_user_model()
 

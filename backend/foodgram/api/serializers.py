@@ -1,14 +1,13 @@
 import base64
 from uuid import uuid4
+
 from django.core.files.base import ContentFile
-
+from djoser.serializers import \
+    UserCreateSerializer as DjoserUserCreateSerializer
 from rest_framework import serializers
-from djoser.serializers import (UserCreateSerializer
-                                as DjoserUserCreateSerializer)
-
 from rest_framework.exceptions import ValidationError
 
-from recipes.models import Tag, Ingredient, Recipe, IngredientsInRecipes
+from recipes.models import Ingredient, IngredientsInRecipes, Recipe, Tag
 from users.models import User
 
 
