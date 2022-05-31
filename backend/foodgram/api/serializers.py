@@ -2,8 +2,8 @@ import base64
 from uuid import uuid4
 
 from django.core.files.base import ContentFile
-from djoser.serializers import \
-    UserCreateSerializer as DjoserUserCreateSerializer
+from djoser.serializers import (UserCreateSerializer
+                                as DjoserUserCreateSerializer)
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -82,12 +82,11 @@ class ImageFieldBase64Input(serializers.ImageField):
             format, image_string = data.split(';base64,')
             file_format = format.split('/')[-1]
             file_name = f'{str(uuid4())}.{file_format}'
-            data = ContentFile(base64.b64decode(image_string), name=file_name)
+            return ContentFile(base64.b64decode(image_string), name=file_name)
         except ValueError:
             raise serializers.ValidationError(
                 'Ошибка в переданном изображении.'
             )
-        return data
 
 
 class RecipeSerializer(serializers.ModelSerializer):
