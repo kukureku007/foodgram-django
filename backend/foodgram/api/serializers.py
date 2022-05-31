@@ -93,7 +93,11 @@ class ImageFieldBase64Input(serializers.ImageField):
 class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
-    ingredients = IngredientSerializer(many=True, read_only=True)
+    ingredients = IngredientsInRecipesSerializer(
+        source='ingredientsinrecipes_set',
+        many=True,
+        read_only=True
+    )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
     image = ImageFieldBase64Input()

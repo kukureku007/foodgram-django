@@ -115,6 +115,7 @@ REST_FRAMEWORK = {
 }
 
 DJOSER = {
+    'LOGIN_FIELD': 'email',
     'SERIALIZERS': {
         'token': 'djoser.serializers.TokenSerializer',
         'token_create': 'djoser.serializers.TokenCreateSerializer',

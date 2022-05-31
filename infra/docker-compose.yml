@@ -1,6 +1,10 @@
 version: '3.3'
 services:
 
+  backend:
+    build:
+      context: ../backend/foodgram
+      dockerfile: Dockerfile
   frontend:
     build:
       context: ../frontend
