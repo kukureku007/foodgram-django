@@ -10,11 +10,17 @@ class Ingredient(models.Model):
         verbose_name='Единица измерения', max_length=200
     )
 
+    def __srt__(self):
+        return self.name
+
 
 class Tag(models.Model):
     name = models.CharField(verbose_name='Название', max_length=200)
     color = models.CharField(verbose_name='Цвет', max_length=200, null=True)
     slug = models.SlugField(verbose_name='Slug', unique=True, null=True)
+
+    def __srt__(self):
+        return self.name
 
 
 class Recipe(models.Model):
@@ -47,9 +53,16 @@ class Recipe(models.Model):
         blank=True,
         null=True
     )
+    pub_date = models.DateTimeField(auto_now_add=True)
 
     def add_ingredient_with_amount(self, ingredient, amount):
         self.ingredients.add(ingredient, through_defaults={'amount': amount})
+
+    class Meta:
+        ordering = ('-pub_date',)
+
+    def __srt__(self):
+        return self.name
 
 
 class IngredientsInRecipes(models.Model):
