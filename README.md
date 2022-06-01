@@ -1,4 +1,5 @@
 # praktikum_new_diplom
+
 ![workflow](https://github.com/kukureku007/foodgram-project-react/actions/workflows/foodgram_workflow.yml/badge.svg)
 Краткое описание проекта
 Проект Foodgram позволяет пользователям регистрироваться и создавать свои рецепты.
@@ -19,5 +20,7 @@ http://51.250.107.79/api/docs/
 
 # Тестовые данные администратора:
 username: admin
+
 email: admin@example.com
+
 password: 1234

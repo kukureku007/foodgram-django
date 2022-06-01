@@ -2,8 +2,7 @@ import base64
 from uuid import uuid4
 
 from django.core.files.base import ContentFile
-from djoser.serializers import \
-    UserCreateSerializer as DjoserUserCreateSerializer
+from djoser.serializers import UserCreateSerializer as DjoserUserSerializer
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -32,7 +31,7 @@ class UserSerializer(serializers.ModelSerializer):
         return False
 
 
-class UserCreateSerializer(DjoserUserCreateSerializer):
+class UserCreateSerializer(DjoserUserSerializer):
     class Meta:
         model = User
         fields = (
