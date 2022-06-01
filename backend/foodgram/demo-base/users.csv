@@ -1,5 +1,5 @@
-id,username,password,email,first_name,last_name,is_active,is_staff
-1,admin,1234,admin@example.com,John,Doe,1,1
-2,bradpitt,1234,braddy@example.com,Brad,Pitt,1,0
-3,batman,1234,batman@batpost.com,Bruce,Wayne,1,0
-4,mister-x,1234,homer@example.com,Homer,Simpson,1,0
+username,password,email,first_name,last_name,is_active,is_staff
+admin,1234,admin@example.com,John,Doe,1,1
+bradpitt,1234,braddy@example.com,Brad,Pitt,1,0
+batman,1234,batman@batpost.com,Bruce,Wayne,1,0
+mister-x,1234,homer@example.com,Homer,Simpson,1,0

@@ -131,5 +131,6 @@ dmypy.json
 # .idea
 .idea
 
+demo-base/
 media/
 user_carts/

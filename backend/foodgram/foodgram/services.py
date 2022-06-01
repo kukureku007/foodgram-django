@@ -19,20 +19,54 @@ def import_model_from_csv(klass, file_path):
             obj.save()
 
 
+def import_model_from_csv_with_relative(klass, klass_related, file_path):
+    with open(file_path) as file:
+        reader = csv.reader(file)
+        headers = next(reader)
+
+        # Из заголовков забираем поле, связанное со связующей моделью
+        relative_header = headers[-1]
+        headers = headers[:-1]
+        for row in reader:
+
+            # Значение связующего поля. Например, значение username
+            relative_value = row[-1]
+
+            row = row[:-1]
+
+            obj = klass()
+
+            # Устанавливаем все несозависимые поля
+            for count, attribute_name in enumerate(headers):
+                setattr(obj, attribute_name, row[count])
+
+            # Из заголовка получаем аттрибуты созависимой модели.
+            # Например, для модели User - это: author-username
+            attribute_name, relative_key = relative_header.split('-')
+
+            # Устанавливаем связь между объектами.
+            # Пример:
+            # obj.author = klass_relative.objects.get(username=relative_value),
+            # где author - attribute_name, username - relative_key
+            setattr(obj, attribute_name, klass_related.objects.get(
+                **{relative_key: relative_value})
+            )
+            obj.save()
+
+
 def import_users_from_csv(file_path):
     with open(file_path) as file:
         reader = csv.reader(file)
-        headers = next(reader)[4:]
-        # id, username, password, email - для create_user()
+        headers = next(reader)[3:]
+        # username, password, email - для create_user()
         for row in reader:
-            pk_, username, password, email = row[:4]
-            row = row[4:]
+            username, password, email = row[:3]
+            row = row[3:]
             user = User.objects.create_user(
                 username=username,
                 password=password,
                 email=email
             )
-            user.pk = pk_
             User.objects.get(username=username).delete()
 
             for count, attribute_name in enumerate(headers):
@@ -40,15 +74,48 @@ def import_users_from_csv(file_path):
             user.save()
 
 
-def import_model_to_model(klass_root, klass, related_name, file_path):
+def import_model_to_model(klass, klass_related, related_name, file_path):
     with open(file_path) as file:
         reader = csv.reader(file)
-        next(reader)
+        header = next(reader)
+        # получаем названия аттрибутов связанных классов
+        klass_key, klass_rel_key = header
+
         for row in reader:
-            obj = klass_root.objects.get(pk=row[1])
-            topping = klass.objects.get(pk=row[2])
+            # Получаем объект первого класса
+            obj = klass.objects.get(
+                **{klass_key: row[0]}
+            )
+            # Получаем объект второго класса
+            topping = klass_related.objects.get(
+                **{klass_rel_key: row[1]}
+            )
+            # Добавляем второй объект к первому
             klass_method = getattr(obj, f'{related_name}')
             klass_method.add(topping)
+
+
+def import_ingredients(klass, klass_related, related_name, file_path):
+    with open(file_path) as file:
+        reader = csv.reader(file)
+        header = next(reader)
+        # получаем названия аттрибутов связанных классов
+        _, klass_key, klass_rel_key = header
+
+        for row in reader:
+            # Получаем объект первого класса
+
+            obj = klass.objects.get(
+                **{klass_key: row[2]}
+            )
+            # Получаем объект второго класса
+            topping = klass_related.objects.get(
+                **{klass_rel_key: row[1]}
+            )
+
+            # Добавляем второй объект к первому
+            klass_method = getattr(obj, f'{related_name}')
+            klass_method.add(topping, through_defaults={'amount': row[0]})
 
 
 def delete_user_db():
@@ -71,17 +138,19 @@ def import_demo():
     import_users_from_csv('demo-base/users.csv')
     import_model_from_csv(Ingredient, 'demo-base/ingredients.csv')
     import_model_from_csv(Tag, 'demo-base/tags.csv')
-    import_model_from_csv(Recipe, 'demo-base/recipes.csv')
-    import_model_from_csv(
-        IngredientsInRecipes,
-        'demo-base/igredients_in_recipes.csv'
-    )
+    import_model_from_csv_with_relative(Recipe, User, 'demo-base/recipes.csv')
     import_model_to_model(Recipe, Tag, 'tags', 'demo-base/recipe_tags.csv')
     import_model_to_model(User, Recipe, 'favorites', 'demo-base/favorites.csv')
     import_model_to_model(User, Recipe, 'cart', 'demo-base/cart.csv')
     import_model_to_model(
         User, User, 'subscriptions',
         'demo-base/subscriptions.csv'
+    )
+    import_ingredients(
+        Recipe,
+        Ingredient,
+        'ingredients',
+        'demo-base/igredients_in_recipes.csv'
     )
 
 
