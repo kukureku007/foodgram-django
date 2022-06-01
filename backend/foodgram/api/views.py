@@ -4,7 +4,7 @@ import django_filters
 from django.contrib.auth import get_user_model
 from django.http import FileResponse
 from djoser.serializers import SetPasswordSerializer
-from rest_framework import filters, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from foodgram.services import make_cart_file
 from recipes.models import Ingredient, Recipe, Tag
 
-from .filters import RecipeFilter
+from .filters import IngredientFilter, RecipeFilter
 from .mixins import CreateListRetrieveViewSet
 from .pagination import PageNumberWithLimitPagination
 from .permissions import AuthorOnly
@@ -115,8 +115,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ('^name',)
+    filter_backends = (django_filters.rest_framework.DjangoFilterBackend,)
+    filterset_class = IngredientFilter
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
