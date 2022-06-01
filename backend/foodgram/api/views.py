@@ -127,6 +127,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
 
     def get_queryset(self):
+        # Если приходит некорректный параметр is_in_shopping_cart
+        # или is_favorited, то ошибки не возникнет
         if self.request.user.is_authenticated:
             is_favorited = self.request.query_params.get('is_favorited')
             is_in_shopping_cart = self.request.query_params.get(
@@ -140,7 +142,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                    and strtobool(is_in_shopping_cart)):
                     return self.request.user.cart.all()
             except ValueError:
-                print('error')
+                pass
 
         return super().get_queryset()
 
