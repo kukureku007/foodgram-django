@@ -4,34 +4,34 @@ from rest_framework import routers
 from .views import IngredientViewSet, RecipeViewSet, TagViewSet, UserViewSet
 
 app_name = 'api'
-router = routers.DefaultRouter()
+router_v1 = routers.DefaultRouter()
 
-router.register(
-    r'tags',
+router_v1.register(
+    r'(?P<version>v1)/tags',
     TagViewSet,
     basename='api-tags'
 )
 
-router.register(
-    r'ingredients',
+router_v1.register(
+    r'(?P<version>v1)/ingredients',
     IngredientViewSet,
     basename='api-ingredients'
 )
 
-router.register(
-    r'recipes',
+router_v1.register(
+    r'(?P<version>v1)/recipes',
     RecipeViewSet,
     basename='api-recipes'
 )
 
-router.register(
-    r'users',
+router_v1.register(
+    r'(?P<version>v1)/users',
     UserViewSet,
     basename='api-users'
 )
 
 
 urlpatterns = [
-    path('auth/', include('djoser.urls.authtoken')),
-    path('', include(router.urls))
+    path('v1/auth/', include('djoser.urls.authtoken')),
+    path('', include(router_v1.urls))
 ]
