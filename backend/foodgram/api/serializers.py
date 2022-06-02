@@ -65,6 +65,7 @@ class IngredientsInRecipesSerializer(serializers.ModelSerializer):
         source='ingredient.id',
         read_only=False
     )
+    # id = PrimaryKeyRelatedField(queryset=User.objects.all())
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit'
@@ -157,8 +158,8 @@ class RecipeSerializer(serializers.ModelSerializer):
 
             if ingredient_id in ingredients_already_checked:
                 raise ValidationError({
-                    'ingredients': f'Вы несколько раз добавили '
-                                   f'ингредиент с id={ingredient_id}'
+                    'ingredients': [(f'Вы несколько раз добавили '
+                                    f'ингредиент с id={ingredient_id}')]
                 })
 
             try:
