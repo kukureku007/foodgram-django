@@ -79,7 +79,7 @@ class IngredientsInRecipesSerializer(serializers.ModelSerializer):
     def validate_amount(self, value):
         if value < 1:
             raise serializers.ValidationError(
-                'Количество должно быть больше 1'
+                'Количество ингредиента должно быть больше 0.'
             )
         return value
 
@@ -97,13 +97,16 @@ class ImageFieldBase64Input(serializers.ImageField):
             )
 
 
+# from rest_framework.validators import UniqueValidator
 class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
     ingredients = IngredientsInRecipesSerializer(
         source='ingredientsinrecipes_set',
         many=True,
-        read_only=False
+        read_only=False,
+        # unique=True
+        # validators=[UniqueValidator(queryset=IngredientsInRecipes.objects.all())]
     )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
@@ -146,6 +149,13 @@ class RecipeSerializer(serializers.ModelSerializer):
         data['tags'] = self.validate_tags(data['tags'])
 
         return super().run_validation(data)
+
+    def validate_cooking_time(self, value):
+        if value < 1:
+            raise serializers.ValidationError(
+                'Время готовки должно быть больше 0.'
+            )
+        return value
 
     def validate_ingredients(self, value):
         ingredients_already_checked = set()
