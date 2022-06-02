@@ -97,16 +97,13 @@ class ImageFieldBase64Input(serializers.ImageField):
             )
 
 
-# from rest_framework.validators import UniqueValidator
 class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
     ingredients = IngredientsInRecipesSerializer(
         source='ingredientsinrecipes_set',
         many=True,
-        read_only=False,
-        # unique=True
-        # validators=[UniqueValidator(queryset=IngredientsInRecipes.objects.all())]
+        read_only=False
     )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
@@ -158,28 +155,30 @@ class RecipeSerializer(serializers.ModelSerializer):
         return value
 
     def validate_ingredients(self, value):
-        ingredients_already_checked = set()
-
         if not value:
             raise serializers.ValidationError(
                 'Список ингредиентов пуст!'
             )
 
-        # (Ingredient_object, amount)
         result = []
-
         for item in value:
             ing = item['ingredient']['id']
             amount = item['amount']
-            if ing in ingredients_already_checked:
-                raise serializers.ValidationError(
-                    f'Вы добавили {ing} несколько раз.'
-                )
-
             result.append((ing, amount))
-            ingredients_already_checked.add(ing)
 
         return result
+
+    def validate(self, attrs):
+        ingredients_already_checked = set()
+
+        for ing in attrs['ingredientsinrecipes_set']:
+            if ing in ingredients_already_checked:
+                raise serializers.ValidationError(
+                    f'Вы добавили {ing[0].name} несколько раз.'
+                )
+            ingredients_already_checked.add(ing)
+
+        return super().validate(attrs)
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
