@@ -159,8 +159,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(
             author=self.request.user,
-            tags=self.request.data['tags'],
-            ingredients=self.request.data['ingredients']
+            tags=self.request.data['tags']
         )
 
     def perform_update(self, serializer):
