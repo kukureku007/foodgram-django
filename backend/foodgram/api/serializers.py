@@ -154,29 +154,22 @@ class RecipeSerializer(serializers.ModelSerializer):
             )
         return value
 
-    def validate_ingredients(self, value):
-        if not value:
+    def validate(self, attrs):
+        ingredients = attrs['ingredientsinrecipes_set']
+        if not ingredients:
             raise serializers.ValidationError(
                 'Список ингредиентов пуст!'
             )
 
-        result = []
-        for item in value:
-            ing = item['ingredient']['id']
-            amount = item['amount']
-            result.append((ing, amount))
-
-        return result
-
-    def validate(self, attrs):
         ingredients_already_checked = set()
 
-        for ing in attrs['ingredientsinrecipes_set']:
-            if ing in ingredients_already_checked:
+        for ing in ingredients:
+            ingredient = ing['ingredient']['id']
+            if ingredient in ingredients_already_checked:
                 raise serializers.ValidationError(
-                    f'Вы добавили {ing[0].name} несколько раз.'
+                    f'Вы добавили {ingredient.name} несколько раз.'
                 )
-            ingredients_already_checked.add(ing)
+            ingredients_already_checked.add(ingredient)
 
         return super().validate(attrs)
 
@@ -191,7 +184,10 @@ class RecipeSerializer(serializers.ModelSerializer):
         recipe.tags.add(*tags)
 
         for ingregient_with_amount in ingregients_with_amount:
-            recipe.add_ingredient_with_amount(*ingregient_with_amount)
+            recipe.add_ingredient_with_amount(
+                ingregient_with_amount['ingredient']['id'],
+                ingregient_with_amount['amount']
+            )
 
         return recipe
 

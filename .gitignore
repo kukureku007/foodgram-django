@@ -134,3 +134,4 @@ dmypy.json
 demo-base/
 media/
 user_carts/
+static/

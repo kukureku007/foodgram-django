@@ -9,7 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
-from foodgram.services import make_cart_file
+from foodgram.services import make_cart_file_pdf
 from recipes.models import Ingredient, Recipe, Tag
 
 from .filters import IngredientFilter, RecipeFilter
@@ -229,6 +229,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 {'errors': 'Ваша корзина пуста.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        file_name = make_cart_file(user)
+        file_name = make_cart_file_pdf(user)
 
         return FileResponse(open(file_name, 'rb'), as_attachment=True)

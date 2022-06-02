@@ -1,7 +1,12 @@
 import csv
+from math import ceil
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
 
 from recipes.models import Ingredient, IngredientsInRecipes, Recipe, Tag
 
@@ -198,5 +203,52 @@ def make_cart_file(user: User):
             line = (f'{ingredient.name}: {amount}'
                     f'({ingredient.measurement_unit})\n')
             file.write(line)
+
+    return file_name
+
+
+def make_cart_file_pdf(user: User):
+    pdfmetrics.registerFont(TTFont(
+        'FreeSans',
+        f'{settings.STATIC_ROOT}/fonts/FreeSans.ttf'
+    ))
+    ingredients = ingredients_in_cart(user)
+    file_name = f'{settings.CART_ROOT}/{user.username}-cart.pdf'
+
+    my_canvas = canvas.Canvas(file_name, pagesize=A4)
+    x = 100
+    lines_per_list = 10
+    total_count = len(ingredients.keys())
+    page_num = int(ceil(total_count / lines_per_list))
+
+    ings = iter(ingredients.keys())
+
+    for page in range(page_num):
+        my_canvas.setFont('FreeSans', 18)
+        my_canvas.drawString(
+            x, 800,
+            f'Список покупок. Страница: {page + 1}'
+        )
+        my_canvas.drawString(
+            x, 750,
+            f'Пользователь: {user.username}'
+        )
+        y = 700
+
+        for _ in range(lines_per_list):
+            try:
+                ingredient_id = next(ings)
+                ingredient = Ingredient.objects.get(pk=ingredient_id)
+                amount = ingredients[ingredient_id]
+                line = (f'{ingredient.name}: {amount}'
+                        f'({ingredient.measurement_unit})')
+                y -= 50
+                my_canvas.drawString(x, y, line)
+
+            except StopIteration:
+                break
+
+        my_canvas.showPage()
+    my_canvas.save()
 
     return file_name
