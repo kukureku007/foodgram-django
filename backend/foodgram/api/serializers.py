@@ -204,7 +204,10 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         recipe.ingredients.clear()
         for ingregient_with_amount in ingregients_with_amount:
-            recipe.add_ingredient_with_amount(*ingregient_with_amount)
+            recipe.add_ingredient_with_amount(
+                ingregient_with_amount['ingredient']['id'],
+                ingregient_with_amount['amount']
+            )
 
         return recipe
 

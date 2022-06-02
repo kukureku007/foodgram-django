@@ -18,9 +18,14 @@ http://51.250.107.79/admin/
 Описание API:
 http://51.250.107.79/api/docs/
 
-# Тестовые данные администратора:
-username: admin
+# Тестовые данные пользователя:
 
 email: admin@example.com
+
+password: 1234
+
+# Тестовые данные для админ-панели
+
+username: admin
 
 password: 1234
